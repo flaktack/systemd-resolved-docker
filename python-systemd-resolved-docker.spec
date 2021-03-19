@@ -2,8 +2,8 @@
 %global eggname systemd_resolved_docker
 
 Name:           python-%{srcname}
-Version:        0.0.0
-Release:        0%{?dist}
+Version:        0.1.0
+Release:        1%{?dist}
 Summary:        systemd-resolved and docker DNS integration
 
 License:        BSD
@@ -77,3 +77,6 @@ install -p -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sysconfig/%{srcname}
 #-- CHANGELOG -----------------------------------------------------------------#
 	
 %changelog
+* Fri Mar 19 2021 Zsombor Welker <fedora@zdeqb.com> 0.1.0-1
+- Initial Version
+
