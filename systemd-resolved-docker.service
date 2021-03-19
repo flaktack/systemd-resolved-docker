@@ -1,0 +1,13 @@
+[Unit]
+Description=systemd-resolved docker DNS
+After=docker.service systemd-resolved.service
+
+[Service]
+Type=notify
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=-/etc/sysconfig/systemd-resolved-docker
+ExecStart=/usr/bin/systemd-resolved-docker
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

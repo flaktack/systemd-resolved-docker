@@ -1,0 +1,5 @@
+/dist
+/*.egg-info
+/rpm/*.rpm
+/rpm/*.tar.gz
+__pycache__

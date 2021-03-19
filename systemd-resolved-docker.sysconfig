@@ -1,0 +1,26 @@
+## DNS server to use when resolving queries from docker containers.
+## default: 127.0.0.53
+# DNS_SERVER=127.0.0.53
+
+## Docker interface name
+## default: first docker network's interface
+# DOCKER_INTERFACE=docker0
+
+## IPs to listen on for queries from systemd-resolved and docker containers
+## default: ip address of each defined docker network
+# LISTEN_ADDRESS=172.17.0.1
+
+## Port to listen on for queries from systemd-resolved and docker containers.
+## default: 53
+# LISTEN_PORT=53
+
+## Domain to append to containers which don't have one set using `--domainname`
+## or are not part of a network
+## default: .docker
+# DEFAULT_DOMAIN=.docker
+
+## Domain globs of domains which will be handled by the DNS server.
+## A container must be within one of these domains, while all non-matching requests
+## will be forwarded to the configured DNS server.
+## default: .docker
+# ALLOWED_DOMAINS=.docker
