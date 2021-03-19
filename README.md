@@ -23,12 +23,12 @@ For Fedora and RPM based systems [COPR](https://copr.fedorainfracloud.org/coprs/
     
         dnf install systemd-resolved-docker
     
-1. Start and optionally enable the services
+1. Start and optionally enable the service
    
        systemctl start  systemd-resolved-docker
        systemctl enable systemd-resolved-docker
 
-1. Docker should be updated to use the DNS server provided by `systemd-docker-resolved.` This may be done
+1. Docker should be updated to use the DNS server provided by `systemd-docker-resolved`. This may be done
    globally by editing the docker daemon's configuration (`daemon.json`) or per-container using the `--dns`
    flag.
 

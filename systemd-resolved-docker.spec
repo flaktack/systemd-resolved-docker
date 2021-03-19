@@ -1,27 +1,23 @@
 %global srcname systemd-resolved-docker
 %global eggname systemd_resolved_docker
 
-Name:           python-%{srcname}
+Name:           %{srcname}
 Version:        0.1.0
 Release:        1%{?dist}
 Summary:        systemd-resolved and docker DNS integration
 
-License:        BSD
-URL:            https://pypi.python.org/pypi/systemd_resolved_docker
-#Source0:        ${pypi_source}
+License:        MIT
+URL:            https://github.com/flaktack/systemd-resolved-docker
+# Sources can be obtained by
+# git clone https://github.com/flaktack/systemd-resolved-docker
+# cd systemd-resolved-docker
+# tito build --tgz
 Source0:        %{srcname}-%{version}.tar.gz
 Source1:        %{srcname}.service
 Source2:        %{srcname}.sysconfig
 
 BuildArch:      noarch
 
-%global _description %{expand:
-systemd-resolved and docker DNS integration}
-
-%description %_description
-
-%package -n python3-%{srcname}
-Summary:        %{summary}
 %if 0%{?el6}
 BuildRequires: python34-devel
 BuildRequires: python34-setuptools
@@ -31,7 +27,14 @@ BuildRequires: python3-setuptools
 %endif
 BuildRequires: systemd-rpm-macros
 
-%description -n python3-%{srcname} %_description
+%description
+Provides systemd-resolved and docker DNS integration.
+
+A DNS server is configured to listen on each docker interface's IP address. This is used to:
+1. expose the systemd-resolved DNS service (127.0.0.53) to docker containers by proxying DNS requests, since the systems
+   loopback IPs can't be accessed from containers.
+2. adds the created DNS servers to the docker interface using systemd-resolved so that docker containers may be
+   referenced by hostname. This uses --hostname and --domainname, --network or a default of .docker to create the domains.
 
 #-- PREP, BUILD & INSTALL -----------------------------------------------------#
 %prep
@@ -65,8 +68,7 @@ install -p -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sysconfig/%{srcname}
 
 
 #-- FILES ---------------------------------------------------------------------#
-# Note that there is no %%files section for the unversioned python module
-%files -n python3-%{srcname}
+%files
 %doc README.md
 %{python3_sitelib}/%{eggname}-*.egg-info/
 %{python3_sitelib}/%{eggname}/
@@ -79,4 +81,3 @@ install -p -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sysconfig/%{srcname}
 %changelog
 * Fri Mar 19 2021 Zsombor Welker <fedora@zdeqb.com> 0.1.0-1
 - Initial Version
-
