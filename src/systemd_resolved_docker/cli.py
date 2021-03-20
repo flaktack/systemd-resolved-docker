@@ -18,7 +18,7 @@ class Handler:
         os.system('resolvectl flush-caches')
 
         message = "Refreshed - %d items (%s)" % (
-            len(hosts), ', '.join(["%s/%s" % (host.ip, ','.join(host.host_names)) for host in hosts]))
+            len(hosts), ' '.join(["%s/%s" % (host.ip, ','.join(host.host_names)) for host in hosts]))
         self.log(message)
 
     def on_stop(self):
@@ -30,15 +30,15 @@ class Handler:
 
 def main():
     dns_server = os.environ.get("DNS_SERVER", "127.0.0.53")
-    default_domain = os.environ.get("DEFAULT_DOMAIN", ".docker")
+    default_domain = os.environ.get("DEFAULT_DOMAIN", "docker")
     listen_port = int(os.environ.get("LISTEN_PORT", "53"))
     listen_address = os.environ.get("LISTEN_ADDRESS", None)
 
     tld = os.environ.get('ALLOWED_DOMAINS', None)
-    if tld is None:
+    if tld is None or len(tld.strip()) == 0:
         domains = [".docker"]
     else:
-        domains = tld.split(',') if tld and len(tld) > 0 else []
+        domains = [item.strip() for item in tld.split(',')]
 
     cli = docker.from_env()
     docker_dns_servers = find_docker_dns_servers(cli)
@@ -54,6 +54,7 @@ def main():
         interface = docker_gateway[0]['interface']
 
     handler = Handler()
+    handler.log("Default domain: %s, allowed domains: %s" % (default_domain, ", ".join(domains)))
 
     connector = DockerDNSConnector(listen_addresses, listen_port, dns_server, domains, default_domain, interface,
                                    handler, cli)

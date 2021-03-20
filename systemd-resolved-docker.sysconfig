@@ -17,7 +17,7 @@
 ## Domain to append to containers which don't have one set using `--domainname`
 ## or are not part of a network
 ## default: .docker
-# DEFAULT_DOMAIN=.docker
+# DEFAULT_DOMAIN=docker
 
 ## Domain globs of domains which will be handled by the DNS server.
 ## A container must be within one of these domains, while all non-matching requests

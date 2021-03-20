@@ -1,15 +1,14 @@
 import ipaddress
-import os
 import threading
 from socket import AF_INET, AF_INET6
 
 import dbus
-from dnslib import A, CLASS, QTYPE, RR
+from dnslib import A, CLASS, DNSLabel, QTYPE, RR
 from dnslib.proxy import ProxyResolver
 from dnslib.server import DNSServer
 from pyroute2 import IPRoute
 
-from .dockerwatcher import DockerWatcher
+from .dockerwatcher import DockerWatcher, DockerHost
 from .interceptresolver import InterceptResolver
 from .zoneresolver import ZoneResolver
 
@@ -21,6 +20,7 @@ class DockerDNSConnector:
 
         self.listen_addresses = listen_addresses
         self.upstream_dns_server = upstream_dns_server
+        self.default_domain = default_domain
         self.dns_domains = dns_domains
         self.docker_interface = docker_interface
         self.handler = handler
@@ -39,7 +39,7 @@ class DockerDNSConnector:
             self.servers.append(server)
             self.handler.log("DNS server listening on %s:%s" % (address, listen_port))
 
-        self.watcher = DockerWatcher(self, self.dns_domains_globs, default_domain, cli)
+        self.watcher = DockerWatcher(self, cli)
 
     def start(self):
         self.watcher.start()
@@ -91,14 +91,28 @@ class DockerDNSConnector:
     def handle_hosts(self, hosts):
         zone = []
         host_names = []
+        mapped_hosts = []
 
         for host in hosts:
+            mh = DockerHost([], host.ip)
+            mapped_hosts.append(mh)
+
             for host_name in host.host_names:
-                rr = RR(host_name, QTYPE.A, CLASS.IN, 1, A(host.ip))
+                hn = self.as_allowed_hostname(host_name)
+                mh.host_names.append(hn)
+
+                rr = RR(hn, QTYPE.A, CLASS.IN, 1, A(host.ip))
                 zone.append(rr)
-                host_names.append(host_name)
+                host_names.append(hn)
 
         self.resolver.update(zone)
         self.update_resolved(enabled=len(host_names) > 0)
 
-        self.handler.on_update(hosts)
+        self.handler.on_update(mapped_hosts)
+
+    def as_allowed_hostname(self, hostname):
+        for domain in self.dns_domains_globs:
+            if DNSLabel(hostname).matchGlob(domain):
+                return hostname
+
+        return "%s.%s" % (hostname, self.default_domain)
