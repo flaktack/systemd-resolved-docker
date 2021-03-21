@@ -32,27 +32,29 @@ class ZoneResolver(BaseResolver):
         qname = request.q.qname
         qtype = QTYPE[request.q.qtype]
 
+        found_name_match = False
+
         zone = self.zone
         for name, rtype, rr in zone:
             # Check if label & type match
-            if getattr(qname, self.eq)(name) and (qtype == rtype or
-                                                  qtype == 'ANY' or
-                                                  rtype == 'CNAME'):
-                # If we have a glob match fix reply label
-                if self.glob:
-                    a = copy.copy(rr)
-                    a.rname = qname
-                    reply.add_answer(a)
-                else:
-                    reply.add_answer(rr)
-                # Check for A/AAAA records associated with reply and
-                # add in additional section
-                if rtype in ['CNAME', 'NS', 'MX', 'PTR']:
-                    for a_name, a_rtype, a_rr in zone:
-                        if a_name == rr.rdata.label and a_rtype in ['A', 'AAAA']:
-                            reply.add_ar(a_rr)
+            if getattr(qname, self.eq)(name):
+                found_name_match = True
+                if qtype == rtype or qtype == 'ANY' or rtype == 'CNAME':
+                    # If we have a glob match fix reply label
+                    if self.glob:
+                        a = copy.copy(rr)
+                        a.rname = qname
+                        reply.add_answer(a)
+                    else:
+                        reply.add_answer(rr)
+                    # Check for A/AAAA records associated with reply and
+                    # add in additional section
+                    if rtype in ['CNAME', 'NS', 'MX', 'PTR']:
+                        for a_name, a_rtype, a_rr in zone:
+                            if a_name == rr.rdata.label and a_rtype in ['A', 'AAAA']:
+                                reply.add_ar(a_rr)
 
-        if not reply.rr:
+        if not found_name_match:
             reply.header.rcode = RCODE.NXDOMAIN
 
         return reply

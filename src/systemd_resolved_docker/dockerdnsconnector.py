@@ -24,6 +24,7 @@ class DockerDNSConnector:
         self.dns_domains = dns_domains
         self.docker_interface = docker_interface
         self.handler = handler
+        self.resolved_registered = False
 
         self.dns_domains_globs = ['*%s' % domain if domain.startswith('.') else domain for domain in dns_domains]
 
@@ -62,6 +63,9 @@ class DockerDNSConnector:
         self.handler.on_stop()
 
     def update_resolved(self, enabled=True):
+        if self.resolved_registered == enabled:
+            return
+
         with IPRoute() as ipr:
             ifi = ipr.link_lookup(ifname=self.docker_interface)
             if not ifi:
@@ -87,6 +91,8 @@ class DockerDNSConnector:
                 manager.SetLinkDNS(ifindex, ips)
             else:
                 manager.RevertLink(ifindex)
+
+        self.resolved_registered = enabled
 
     def handle_hosts(self, hosts):
         zone = []
