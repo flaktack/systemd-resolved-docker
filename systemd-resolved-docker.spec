@@ -2,7 +2,7 @@
 %global eggname systemd_resolved_docker
 
 Name:           %{srcname}
-Version:        0.2.0
+Version:        0.2.1
 Release:        1%{?dist}
 Summary:        systemd-resolved and docker DNS integration
 
@@ -79,6 +79,9 @@ install -p -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sysconfig/%{srcname}
 #-- CHANGELOG -----------------------------------------------------------------#
 	
 %changelog
+* Sun Mar 21 2021 Zsombor Welker 0.2.1-1
+- Restart the service whenever docker/systemd-resolved is restarted
+
 * Sun Mar 21 2021 Zsombor Welker 0.2.0-1
 - Clarify domain name generating logic
 
