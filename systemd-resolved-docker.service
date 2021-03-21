@@ -1,6 +1,8 @@
 [Unit]
-Description=systemd-resolved docker DNS
+Description=systemd-resolved and docker DNS integration
+Requires=docker.service systemd-resolved.service
 After=docker.service systemd-resolved.service
+BindsTo=docker.service systemd-resolved.service
 
 [Service]
 Type=notify
