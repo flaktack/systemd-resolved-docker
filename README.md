@@ -148,4 +148,4 @@ For Fedora and RPM based systems [COPR](https://copr.fedorainfracloud.org/coprs/
 
 ## Links
 
-Portions are based on [docker-auto-dnsmasq](https://github.com/metal3d/docker-auto-dnsmasq).
+Portions are based on [docker-auto-dnsmasq](https://github.com/metal3d/docker-auto-dnsmasq) and [dnslib](https://github.com/paulc/dnslib).
