@@ -37,6 +37,7 @@ class DockerDNSConnector:
 
         for address in listen_addresses:
             server = DNSServer(resolver, address=address, port=listen_port)
+            server.thread_name = "%s:%s" % (address, listen_port)
             self.servers.append(server)
             self.handler.log("DNS server listening on %s:%s" % (address, listen_port))
 
@@ -46,7 +47,7 @@ class DockerDNSConnector:
         self.watcher.start()
 
         for server in self.servers:
-            server.thread = threading.Thread(target=server.server.serve_forever)
+            server.thread = threading.Thread(target=server.server.serve_forever, name=server.thread_name)
             server.thread.start()
 
         self.handler.on_start()
@@ -89,10 +90,11 @@ class DockerDNSConnector:
 
                 manager.SetLinkDomains(ifindex, domains)
                 manager.SetLinkDNS(ifindex, ips)
+                manager.SetLinkDNSSEC(ifindex, "no")
             else:
                 manager.RevertLink(ifindex)
 
-        self.resolved_registered = enabled
+            self.resolved_registered = enabled
 
     def handle_hosts(self, hosts):
         zone = []
