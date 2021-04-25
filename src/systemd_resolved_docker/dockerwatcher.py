@@ -51,7 +51,7 @@ class DockerWatcher(Thread):
 
             # if no explicit --hostname is provided, than it will be the first 12 characters of the container_id.
             # In that case, the hostname can be ignored
-            if hostname not in container_id:
+            if hostname != container_id[:12]:
                 if len(domain) > 0:
                     common_hostnames.append('%s.%s' % (hostname, domain))
                 else:
