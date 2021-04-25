@@ -1,12 +1,8 @@
-import ipaddress
 import threading
-from socket import AF_INET, AF_INET6
 
-import dbus
 from dnslib import A, CLASS, DNSLabel, QTYPE, RR
 from dnslib.proxy import ProxyResolver
 from dnslib.server import DNSServer
-from pyroute2 import IPRoute
 
 from .dockerwatcher import DockerWatcher, DockerHost
 from .interceptresolver import InterceptResolver
@@ -24,7 +20,6 @@ class DockerDNSConnector:
         self.dns_domains = dns_domains
         self.docker_interface = docker_interface
         self.handler = handler
-        self.resolved_registered = False
 
         self.dns_domains_globs = ['*%s' % domain if domain.startswith('.') else domain for domain in dns_domains]
 
@@ -53,8 +48,6 @@ class DockerDNSConnector:
         self.handler.on_start()
 
     def stop(self):
-        self.update_resolved(enabled=False)
-
         for server in self.servers:
             server.stop()
 
@@ -62,39 +55,6 @@ class DockerDNSConnector:
             server.thread.join()
 
         self.handler.on_stop()
-
-    def update_resolved(self, enabled=True):
-        if self.resolved_registered == enabled:
-            return
-
-        with IPRoute() as ipr:
-            ifi = ipr.link_lookup(ifname=self.docker_interface)
-            if not ifi:
-                raise ValueError("Unknown interface '%s'" % self.docker_interface)
-
-            ifindex = ifi[0]
-
-            system_bus = dbus.SystemBus()
-            proxy = system_bus.get_object('org.freedesktop.resolve1', '/org/freedesktop/resolve1')
-            manager = dbus.Interface(proxy, 'org.freedesktop.resolve1.Manager')
-
-            if enabled:
-                domains = [[domain.strip("."), True] for domain in self.dns_domains]
-                ips = [
-                    [
-                        AF_INET if isinstance(ip, ipaddress.IPv4Address) else AF_INET6,
-                        ip.packed
-                    ]
-                    for ip in [ipaddress.ip_address(ip) for ip in self.listen_addresses]
-                ]
-
-                manager.SetLinkDomains(ifindex, domains)
-                manager.SetLinkDNS(ifindex, ips)
-                manager.SetLinkDNSSEC(ifindex, "no")
-            else:
-                manager.RevertLink(ifindex)
-
-            self.resolved_registered = enabled
 
     def handle_hosts(self, hosts):
         zone = []
@@ -114,7 +74,6 @@ class DockerDNSConnector:
                 host_names.append(hn)
 
         self.resolver.update(zone)
-        self.update_resolved(enabled=len(host_names) > 0)
 
         self.handler.on_update(mapped_hosts)
 

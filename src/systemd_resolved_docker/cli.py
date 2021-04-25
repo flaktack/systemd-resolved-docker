@@ -5,6 +5,7 @@ import docker
 import signal
 from systemd import daemon, journal
 
+from systemd_resolved_docker.resolvedconnector import SystemdResolvedConnector
 from .dockerdnsconnector import DockerDNSConnector
 from .utils import find_default_docker_bridge_gateway, find_docker_dns_servers
 
@@ -15,10 +16,9 @@ class Handler:
         self.log("Started daemon")
 
     def on_update(self, hosts):
-        os.system('resolvectl flush-caches')
-
         message = "Refreshed - %d items (%s)" % (
             len(hosts), ' '.join(["%s/%s" % (host.ip, ','.join(host.host_names)) for host in hosts]))
+
         self.log(message)
 
     def on_stop(self):
@@ -56,13 +56,18 @@ def main():
     handler = Handler()
     handler.log("Default domain: %s, allowed domains: %s" % (default_domain, ", ".join(domains)))
 
-    connector = DockerDNSConnector(listen_addresses, listen_port, dns_server, domains, default_domain, interface,
-                                   handler, cli)
-    connector.start()
+    resolved = SystemdResolvedConnector(interface, listen_addresses, domains)
+
+    dns_connector = DockerDNSConnector(listen_addresses, listen_port, dns_server, domains, default_domain, interface,
+                                       handler, cli)
+    dns_connector.start()
+
+    resolved.register()
 
     def sig_handler(signum, frame):
         handler.log("Stopping - %s" % signal.Signals(signum))
-        connector.stop()
+        resolved.unregister()
+        dns_connector.stop()
 
     signal.signal(signal.SIGTERM, sig_handler)
     signal.signal(signal.SIGINT, sig_handler)
