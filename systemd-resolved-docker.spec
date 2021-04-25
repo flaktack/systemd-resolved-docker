@@ -2,7 +2,7 @@
 %global eggname systemd_resolved_docker
 
 Name:           %{srcname}
-Version:        0.3.0
+Version:        0.4.0
 Release:        1%{?dist}
 Summary:        systemd-resolved and docker DNS integration
 
@@ -79,6 +79,11 @@ install -p -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sysconfig/%{srcname}
 #-- CHANGELOG -----------------------------------------------------------------#
 	
 %changelog
+* Sun Apr 25 2021 Zsombor Welker <fedora@zdeqb.com> 0.4.0-1
+- Document unmanaging the docker0 interface
+- Explicitly disable DNSSEC in systemd-resolved
+- Use an explicit prefix check for container ids
+
 * Sun Mar 21 2021 Zsombor Welker 0.3.0-1
 - Only return NXDOMAIN of no records exist for a domain
 
