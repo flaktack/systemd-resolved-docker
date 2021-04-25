@@ -126,6 +126,17 @@ For Fedora and RPM based systems [COPR](https://copr.fedorainfracloud.org/coprs/
     ]
     ```
 
+1. NetworkManager may reset the docker interface's configuration for systemd-resolved. If that happens than
+   the interface needs to be unmanaged. This may be done by creating a `/etc/NetworkManager/conf.d/99-docker.conf`:
+
+   ```ini
+   [main]
+   plugins=keyfile
+
+   [keyfile]
+   unmanaged-devices=interface-name:docker0
+   ```
+
 ### Configuration
 
 `systemd-resolved-docker` may be configured using environment variables. When installed using the RPM
