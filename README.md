@@ -74,6 +74,14 @@ If configured correctly then `resolvectl status` should show the configured link
         DNS Domain: ~docker
     ...
 
+### Docker compose support
+
+For containers started with docker-compose the service tries to generate a short domain name: `<compose-service-name>.<default_domain>`
+
+This would result in a name like `my_app.docker`
+
+Once you would use two compose files with the same service name or start to scale out the service then the short form `<compose-service-name>.<default_domain>` will be removed and only the unique names as described above (e.g. `<container_name>.<container_network>.<default_domain>`) will be available.
+
 ### 127.0.0.53 / systemd-resolved within containers
 
 If docker is configured to use the provided DNS server then the container domain names may also be resolved within containers:
