@@ -2,21 +2,17 @@ def find_docker_dns_servers(cli):
     return []
 
 
-def find_default_docker_bridge_gateway(cli):
+def find_default_docker_bridge_gateways(cli):
     networks = cli.networks.list()
 
     addresses = []
     for network in networks:
-        if 'Options' not in network.attrs:
+        if 'Options' in network.attrs and network.attrs['Options'].get('com.docker.network.bridge.default_bridge') == 'true':
+            name = network.attrs['Options']['com.docker.network.bridge.name']
+        elif network.attrs.get('Driver') == 'bridge':
+            name = f"br-{network.attrs['Id'][0:12]}"
+        else:
             continue
-
-        if 'com.docker.network.bridge.default_bridge' not in network.attrs['Options']:
-            continue
-
-        if network.attrs['Options']['com.docker.network.bridge.default_bridge'] != 'true':
-            continue
-
-        name = network.attrs['Options']['com.docker.network.bridge.name']
 
         if 'IPAM' not in network.attrs:
             continue

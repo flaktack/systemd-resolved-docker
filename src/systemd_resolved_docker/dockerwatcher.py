@@ -38,6 +38,9 @@ class DockerWatcher(Thread):
     def collect_from_containers(self):
         domain_records = {}
 
+        compose_names = []
+        duplicate_compose_names = []
+
         for c in self.cli.containers.list():
             common_hostnames = []
 
@@ -57,6 +60,19 @@ class DockerWatcher(Thread):
                 else:
                     common_hostnames.append(hostname)
 
+            if c.attrs['Config'].get('Labels'):
+                compose_name = c.attrs['Config']['Labels'].get('com.docker.compose.service')
+            else:
+                compose_name = None
+
+
+            if compose_name:
+                common_hostnames.append(compose_name)
+                if compose_name in compose_names:
+                    duplicate_compose_names.append(compose_name)
+                else:
+                    compose_names.append(compose_name)
+
             name = c.attrs['Name'][1:]
             settings = c.attrs['NetworkSettings']
             for netname, network in settings.get('Networks', {}).items():
@@ -73,6 +89,9 @@ class DockerWatcher(Thread):
                     record.append('%s.%s' % (name, netname))
 
                 domain_records[ip] = record
+
+        for ip, hosts in domain_records.items():
+            domain_records[ip] = list(filter(lambda h: h not in duplicate_compose_names, hosts))
 
         hostnames = [DockerHost(hosts, ip) for ip, hosts in domain_records.items()]
 

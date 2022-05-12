@@ -7,7 +7,7 @@ from systemd import daemon, journal
 
 from systemd_resolved_docker.resolvedconnector import SystemdResolvedConnector
 from .dockerdnsconnector import DockerDNSConnector
-from .utils import find_default_docker_bridge_gateway, find_docker_dns_servers
+from .utils import find_default_docker_bridge_gateways, find_docker_dns_servers
 
 
 class Handler:
@@ -42,7 +42,7 @@ def main():
 
     cli = docker.from_env()
     docker_dns_servers = find_docker_dns_servers(cli)
-    docker_gateway = find_default_docker_bridge_gateway(cli)
+    docker_gateway = find_default_docker_bridge_gateways(cli)
 
     if listen_address is None or len(listen_address) < 1:
         listen_addresses = [entry['gateway'] for entry in docker_gateway]
@@ -51,22 +51,31 @@ def main():
 
     interface = os.environ.get('DOCKER_INTERFACE', None)
     if interface is None or len(interface) < 1:
-        interface = docker_gateway[0]['interface']
+        interfaces = []
+        for gateway in docker_gateway:
+            if gateway['interface'] not in interfaces:
+                interfaces.append(gateway['interface'])
+    else:
+        interfaces = [interface]
 
     handler = Handler()
     handler.log("Default domain: %s, allowed domains: %s" % (default_domain, ", ".join(domains)))
 
-    resolved = SystemdResolvedConnector(interface, listen_addresses, domains)
+    resolves = []
+    for interface in interfaces:
+        resolves.append(SystemdResolvedConnector(interface, listen_addresses, domains))
 
-    dns_connector = DockerDNSConnector(listen_addresses, listen_port, dns_server, domains, default_domain, interface,
+    dns_connector = DockerDNSConnector(listen_addresses, listen_port, dns_server, domains, default_domain, interfaces,
                                        handler, cli)
     dns_connector.start()
 
-    resolved.register()
+    for resolver in resolves:
+        resolver.register()
 
     def sig_handler(signum, frame):
         handler.log("Stopping - %s" % signal.Signals(signum))
-        resolved.unregister()
+        for resolver in resolves:
+            resolver.unregister()
         dns_connector.stop()
 
     signal.signal(signal.SIGTERM, sig_handler)
