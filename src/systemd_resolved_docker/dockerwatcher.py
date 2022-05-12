@@ -42,6 +42,8 @@ class DockerWatcher(Thread):
         duplicate_compose_names = []
 
         for c in self.cli.containers.list():
+            if not c.attrs['State'].get('Running'):
+                continue
             common_hostnames = []
 
             # container_id (.docker), only the first 12 characters need to be used
@@ -64,7 +66,6 @@ class DockerWatcher(Thread):
                 compose_name = c.attrs['Config']['Labels'].get('com.docker.compose.service')
             else:
                 compose_name = None
-
 
             if compose_name:
                 common_hostnames.append(compose_name)
