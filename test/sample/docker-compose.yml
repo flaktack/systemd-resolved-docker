@@ -1,0 +1,20 @@
+version: "2.1"
+services:
+  webserver:
+    image: nginx
+    networks:
+      - pytest
+  broker:
+    image: redis
+    networks:
+      - pytest
+
+networks:
+  pytest:
+    driver: bridge
+    enable_ipv6: false
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1

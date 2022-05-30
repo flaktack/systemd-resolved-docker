@@ -45,7 +45,10 @@ def main():
     docker_gateway = find_default_docker_bridge_gateways(cli)
 
     if listen_address is None or len(listen_address) < 1:
-        listen_addresses = [entry['gateway'] for entry in docker_gateway]
+        listen_addresses = []
+        for entry in docker_gateway:
+            if 'gateway' in entry:
+                listen_addresses.append(entry['gateway'])
     else:
         listen_addresses = listen_address.split(",")
 
@@ -63,6 +66,7 @@ def main():
 
     resolves = []
     for interface in interfaces:
+        handler.log(f"Adding interface {interface}")
         resolves.append(SystemdResolvedConnector(interface, listen_addresses, domains))
 
     dns_connector = DockerDNSConnector(listen_addresses, listen_port, dns_server, domains, default_domain, interfaces,

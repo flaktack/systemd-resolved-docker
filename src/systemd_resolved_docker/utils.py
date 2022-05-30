@@ -25,5 +25,8 @@ def find_default_docker_bridge_gateways(cli):
                 gateway = config['Gateway']
                 print("Found gateway %s for %s" % (gateway, name))
                 addresses.append({'gateway': gateway, 'interface': name})
+            elif 'Subnet' in config:
+                print("Found only subnet for %s" % name)
+                addresses.append({'interface': name})
 
     return addresses

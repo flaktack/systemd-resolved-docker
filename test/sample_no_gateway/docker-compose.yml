@@ -1,0 +1,19 @@
+version: "2.1"
+services:
+  webserver:
+    image: nginx
+    networks:
+      - pytest_nogw
+  broker:
+    image: redis
+    networks:
+      - pytest_nogw
+
+networks:
+  pytest_nogw:
+    driver: bridge
+    enable_ipv6: false
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.18.238.0/24
