@@ -1,14 +1,15 @@
-#!/usr/bin/env python3
+#!/usr/bin/sudo python
+
+# #/usr/bin/env python3
 
 import os
 import docker
 import signal
-from systemd import daemon, journal
+from systemd import daemon
 
+from systemd_resolved_docker.dockerwatcher import DockerWatcher
 from systemd_resolved_docker.resolvedconnector import SystemdResolvedConnector
-from .dockerdnsconnector import DockerDNSConnector
-from .utils import find_default_docker_bridge_gateways, find_docker_dns_servers
-
+from systemd_resolved_docker.dockerdnsconnector import DockerDNSConnector
 
 class Handler:
     def on_start(self):
@@ -29,6 +30,7 @@ class Handler:
 
 
 def main():
+
     dns_server = os.environ.get("DNS_SERVER", "127.0.0.53")
     default_domain = os.environ.get("DEFAULT_DOMAIN", "docker")
     listen_port = int(os.environ.get("LISTEN_PORT", "53"))
@@ -41,45 +43,27 @@ def main():
         domains = [item.strip() for item in tld.split(',')]
 
     cli = docker.from_env()
-    docker_dns_servers = find_docker_dns_servers(cli)
-    docker_gateway = find_default_docker_bridge_gateways(cli)
 
-    if listen_address is None or len(listen_address) < 1:
-        listen_addresses = []
-        for entry in docker_gateway:
-            if 'gateway' in entry:
-                listen_addresses.append(entry['gateway'])
-    else:
+    listen_addresses = None
+
+    if listen_address is not None and len(listen_address) > 0:
         listen_addresses = listen_address.split(",")
 
     interface = os.environ.get('DOCKER_INTERFACE', None)
-    if interface is None or len(interface) < 1:
-        interfaces = []
-        for gateway in docker_gateway:
-            if gateway['interface'] not in interfaces:
-                interfaces.append(gateway['interface'])
-    else:
-        interfaces = [interface]
 
     handler = Handler()
     handler.log("Default domain: %s, allowed domains: %s" % (default_domain, ", ".join(domains)))
 
-    resolves = []
-    for interface in interfaces:
-        handler.log(f"Adding interface {interface}")
-        resolves.append(SystemdResolvedConnector(interface, listen_addresses, domains))
+    systemd_resolver = SystemdResolvedConnector(interface, listen_addresses, domains, cli)
 
-    dns_connector = DockerDNSConnector(listen_addresses, listen_port, dns_server, domains, default_domain, interfaces,
-                                       handler, cli)
-    dns_connector.start()
+    dns_connector = DockerDNSConnector(None, listen_port, dns_server, domains, default_domain, handler, cli)
 
-    for resolver in resolves:
-        resolver.register()
+    docker_watcher = DockerWatcher(dns_connector, systemd_resolver, cli)
+    docker_watcher.start()
 
     def sig_handler(signum, frame):
         handler.log("Stopping - %s" % signal.Signals(signum))
-        for resolver in resolves:
-            resolver.unregister()
+        systemd_resolver.stop()
         dns_connector.stop()
 
     signal.signal(signal.SIGTERM, sig_handler)
