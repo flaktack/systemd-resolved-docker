@@ -28,6 +28,8 @@ class DockerWatcher(Thread):
         self.cli = cli
         self.systemd_resolver = systemd_resolver
 
+        self.collect_from_containers()
+
     def run(self) -> None:
 
         for e in self.cli.events(decode=True):
