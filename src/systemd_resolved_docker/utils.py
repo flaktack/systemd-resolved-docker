@@ -1,5 +1,30 @@
-def find_docker_dns_servers(cli):
-    return []
+import ipaddress
+import urllib.parse
+from typing import List
+
+
+class IpAndPort:
+    ip: ipaddress.ip_address
+    port: int
+
+    def __init__(self, ip: ipaddress.ip_address, port: int):
+        self.ip = ip
+        self.port = port
+
+    def __str__(self):
+        return "%s:%s" % (self.ip.compressed, self.port)
+
+
+def parse_ip_port(entry, default_port=53) -> IpAndPort:
+    result = urllib.parse.urlsplit('//' + entry)
+    return IpAndPort(ip=ipaddress.ip_address(result.hostname), port=result.port or default_port)
+
+
+def parse_listen_address(listen_addresses, default_value) -> List[IpAndPort]:
+    if listen_addresses is not None and len(listen_addresses) > 1:
+        return [parse_ip_port(item) for item in listen_addresses.split(",")]
+    else:
+        return default_value()
 
 
 def find_default_docker_bridge_gateway(cli):

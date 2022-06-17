@@ -6,13 +6,13 @@
 ## default: first docker network's interface
 # DOCKER_INTERFACE=docker0
 
-## IPs to listen on for queries from systemd-resolved and docker containers
-## default: ip address of each defined docker network
-# LISTEN_ADDRESS=172.17.0.1
+## IPs (+port) to listen on for queries from systemd-resolved.
+## default: 127.0.0.153
+# SYSTEMD_RESOLVED_LISTEN_ADDRESS=127.0.0.153:53
 
-## Port to listen on for queries from systemd-resolved and docker containers.
-## default: 53
-# LISTEN_PORT=53
+## IPs (+port) to listen on for queries from docker containers in the default network.
+## default: ip of the default docker bridge
+# DOCKER_LISTEN_ADDRESS=172.17.0.1:53
 
 ## Domain to append to containers which don't have one set using `--domainname`
 ## or are not part of a network

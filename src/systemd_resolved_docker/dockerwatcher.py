@@ -9,6 +9,9 @@ class DockerHost:
         self.ip = ip
         self.interface = interface
 
+    def __str__(self):
+        return "%s/%s" % (self.ip, ','.join(self.host_names))
+
 
 class DockerWatcher(Thread):
     """

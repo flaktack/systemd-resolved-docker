@@ -1,4 +1,5 @@
 import threading
+from typing import List
 
 from dnslib import A, CLASS, DNSLabel, QTYPE, RR
 from dnslib.proxy import ProxyResolver
@@ -6,19 +7,16 @@ from dnslib.server import DNSServer
 
 from .dockerwatcher import DockerWatcher, DockerHost
 from .interceptresolver import InterceptResolver
+from .utils import IpAndPort
 from .zoneresolver import ZoneResolver
 
 
 class DockerDNSConnector:
-    def __init__(self, listen_addresses, listen_port, upstream_dns_server, dns_domains, default_domain,
-                 docker_interface, handler, cli):
+    def __init__(self, listen_addresses: List[IpAndPort], upstream_dns_server: IpAndPort, dns_domains, default_domain,
+                 handler, cli):
         super().__init__()
 
-        self.listen_addresses = listen_addresses
-        self.upstream_dns_server = upstream_dns_server
         self.default_domain = default_domain
-        self.dns_domains = dns_domains
-        self.docker_interface = docker_interface
         self.handler = handler
 
         self.dns_domains_globs = ['*%s' % domain if domain.startswith('.') else domain for domain in dns_domains]
@@ -27,14 +25,15 @@ class DockerDNSConnector:
         self.servers = []
 
         resolver = InterceptResolver(self.dns_domains_globs, self.resolver,
-                                     ProxyResolver(upstream_dns_server, port=53, timeout=5))
-        self.handler.log("Unhandled DNS requests will be resolved using %s:53" % upstream_dns_server)
+                                     ProxyResolver(upstream_dns_server.ip.exploded, port=upstream_dns_server.port,
+                                                   timeout=5))
+        self.handler.log("Unhandled DNS requests will be resolved using %s" % upstream_dns_server)
+        self.handler.log("DNS server listening on %s" % ", ".join(map(lambda x: str(x), listen_addresses)))
 
-        for address in listen_addresses:
-            server = DNSServer(resolver, address=address, port=listen_port)
-            server.thread_name = "%s:%s" % (address, listen_port)
+        for ip_and_port in listen_addresses:
+            server = DNSServer(resolver, address=ip_and_port.ip.exploded, port=ip_and_port.port)
+            server.thread_name = "%s:%s" % (ip_and_port.ip, ip_and_port.port)
             self.servers.append(server)
-            self.handler.log("DNS server listening on %s:%s" % (address, listen_port))
 
         self.watcher = DockerWatcher(self, cli)
 

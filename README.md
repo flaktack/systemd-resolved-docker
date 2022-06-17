@@ -115,6 +115,21 @@ Host test.docker not found: 3(NXDOMAIN)
 
 If there are link-local, VPN or other DNS servers configured then those will also work within containers.
 
+## Configuration
+
+`systemd-resolved-docker` may be configured using environment variables. When installed using the RPM
+`/etc/sysconfig/systemd-resolved-docker` may also be modified to update the environment variables.
+
+| Name                              | Description                                                                                                             | Default Value                                            | Example                           |
+|-----------------------------------|-------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------|-----------------------------------|
+| DNS_SERVER                        | DNS server to use when resolving queries from docker containers.                                                        | `127.0.0.53` - systemd-resolved DNS server               | `127.0.0.53`                      |
+| DOCKER_INTERFACE                  | Docker interface name                                                                                                   | The first docker network's interface                     | `docker0`                         |
+| SYSTEMD_RESOLVED_LISTEN_ADDRESS   | IPs (+port) to listen on for queries from systemd-resolved.                                                             | `127.0.0.153`                                            | `127.0.0.153:1053`                |
+| DOCKER_LISTEN_ADDRESS             | IPs (+port) to listen on for queries from docker containers in the default network.                                     | _ip of the default docker bridge_, often `172.17.0.1`    | `172.17.0.1` or `172.17.0.1:53`   |
+| ALLOWED_DOMAINS                   | Domain which will be handled by the DNS server. If a domain starts with `.` then all subdomains will also be allowed.   | `.docker`                                                | `.docker,.local`                  |
+| DEFAULT_DOMAIN                    | Domain to append to hostnames which are not allowed by `ALLOWED_DOMAINS`.                                               | `docker`                                                 | `docker`                          |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------- |
+
 ## Install
 
 ### Fedora / COPR
@@ -154,20 +169,6 @@ For Fedora and RPM based systems [COPR](https://copr.fedorainfracloud.org/coprs/
    [keyfile]
    unmanaged-devices=interface-name:docker0
    ```
-
-### Configuration
-
-`systemd-resolved-docker` may be configured using environment variables. When installed using the RPM
-`/etc/sysconfig/systemd-resolved-docker` may also be modified to update the environment variables.
-
-| Name             | Description                                                                | Default Value                                          | Example                  |
-|------------------|----------------------------------------------------------------------------|--------------------------------------------------------|--------------------------|
-| DNS_SERVER       | DNS server to use when resolving queries from docker containers.           | `127.0.0.53` - systemd-resolved DNS server             | `127.0.0.53`             |
-| DOCKER_INTERFACE | Docker interface name                                                      | The first docker network's interface                   | `docker0`                |
-| LISTEN_ADDRESS   | IPs to listen on for queries from systemd-resolved and docker containers.  | _ip of the default docker bridge_, often `172.17.0.1`  | `172.17.0.1,127.0.0.153` |
-| LISTEN_PORT      | Port to listen on for queries from systemd-resolved and docker containers. | `53`                                                   | `1053`                   |
-| ALLOWED_DOMAINS  | Domain which will be handled by the DNS server. If a domain starts with `.` then all subdomains will also be allowed.  | `.docker`  | `.docker,.local`         |
-| DEFAULT_DOMAIN   | Domain to append to hostnames which are not allowed by `ALLOWED_DOMAINS`.  | `docker`                                               | `docker`                 |
 
 ## Build
 

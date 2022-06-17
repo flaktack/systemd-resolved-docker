@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 import os
-import docker
 import signal
-from systemd import daemon, journal
 
-from systemd_resolved_docker.resolvedconnector import SystemdResolvedConnector
+import docker
+from systemd import daemon
+
 from .dockerdnsconnector import DockerDNSConnector
-from .utils import find_default_docker_bridge_gateway, find_docker_dns_servers
+from .resolvedconnector import SystemdResolvedConnector
+from .utils import find_default_docker_bridge_gateway, parse_ip_port, parse_listen_address
 
 
 class Handler:
@@ -16,8 +17,10 @@ class Handler:
         self.log("Started daemon")
 
     def on_update(self, hosts):
-        message = "Refreshed - %d items (%s)" % (
-            len(hosts), ' '.join(["%s/%s" % (host.ip, ','.join(host.host_names)) for host in hosts]))
+        if len(hosts) > 0:
+            message = "Refreshed - %d items\n\t%s" % (len(hosts), '\n\t'.join(map(lambda x: str(x), hosts)))
+        else:
+            message = "Refreshed - no running containers"
 
         self.log(message)
 
@@ -29,10 +32,10 @@ class Handler:
 
 
 def main():
-    dns_server = os.environ.get("DNS_SERVER", "127.0.0.53")
+    systemd_resolved_listen_address = os.environ.get("SYSTEMD_RESOLVED_LISTEN_ADDRESS", None)
+    docker_listen_address = os.environ.get("DOCKER_LISTEN_ADDRESS", None)
+    dns_server = parse_ip_port(os.environ.get("UPSTREAM_DNS_SERVER", "127.0.0.53"))
     default_domain = os.environ.get("DEFAULT_DOMAIN", "docker")
-    listen_port = int(os.environ.get("LISTEN_PORT", "53"))
-    listen_address = os.environ.get("LISTEN_ADDRESS", None)
 
     tld = os.environ.get('ALLOWED_DOMAINS', None)
     if tld is None or len(tld.strip()) == 0:
@@ -41,25 +44,25 @@ def main():
         domains = [item.strip() for item in tld.split(',')]
 
     cli = docker.from_env()
-    docker_dns_servers = find_docker_dns_servers(cli)
     docker_gateway = find_default_docker_bridge_gateway(cli)
 
-    if listen_address is None or len(listen_address) < 1:
-        listen_addresses = [entry['gateway'] for entry in docker_gateway]
-    else:
-        listen_addresses = listen_address.split(",")
-
-    interface = os.environ.get('DOCKER_INTERFACE', None)
-    if interface is None or len(interface) < 1:
-        interface = docker_gateway[0]['interface']
+    systemd_resolved_interface = os.environ.get('DOCKER_INTERFACE', None)
+    if systemd_resolved_interface is None or len(systemd_resolved_interface) < 1:
+        systemd_resolved_interface = docker_gateway[0]['interface']
 
     handler = Handler()
     handler.log("Default domain: %s, allowed domains: %s" % (default_domain, ", ".join(domains)))
 
-    resolved = SystemdResolvedConnector(interface, listen_addresses, listen_port, domains)
+    systemd_resolved_listen_addresses = parse_listen_address(systemd_resolved_listen_address,
+                                                             lambda: [parse_ip_port("127.0.0.153:53")])
+    docker_listen_addresses = parse_listen_address(docker_listen_address,
+                                                   lambda: [parse_ip_port(entry['gateway']) for entry in
+                                                            docker_gateway])
 
-    dns_connector = DockerDNSConnector(listen_addresses, listen_port, dns_server, domains, default_domain, interface,
-                                       handler, cli)
+    resolved = SystemdResolvedConnector(systemd_resolved_interface, systemd_resolved_listen_addresses, domains, handler)
+
+    dns_connector = DockerDNSConnector(systemd_resolved_listen_addresses + docker_listen_addresses, dns_server, domains,
+                                       default_domain, handler, cli)
     dns_connector.start()
 
     resolved.register()
