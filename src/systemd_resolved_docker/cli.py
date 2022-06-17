@@ -56,7 +56,7 @@ def main():
     handler = Handler()
     handler.log("Default domain: %s, allowed domains: %s" % (default_domain, ", ".join(domains)))
 
-    resolved = SystemdResolvedConnector(interface, listen_addresses, domains)
+    resolved = SystemdResolvedConnector(interface, listen_addresses, listen_port, domains)
 
     dns_connector = DockerDNSConnector(listen_addresses, listen_port, dns_server, domains, default_domain, interface,
                                        handler, cli)

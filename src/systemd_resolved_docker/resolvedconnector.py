@@ -7,11 +7,12 @@ from pyroute2 import IPRoute
 
 
 class SystemdResolvedConnector:
-    def __init__(self, docker_interface, listen_addresses, dns_domains):
+    def __init__(self, docker_interface, listen_addresses, listen_port, dns_domains):
         super().__init__()
 
         self.docker_interface = docker_interface
         self.listen_addresses = listen_addresses
+        self.listen_port = listen_port
         self.dns_domains = dns_domains
 
         self.ifindex = self.resolve_ifindex(docker_interface)
@@ -36,15 +37,17 @@ class SystemdResolvedConnector:
         ips = [
             [
                 AF_INET if isinstance(ip, ipaddress.IPv4Address) else AF_INET6,
-                ip.packed
+                ip.packed,
+                self.listen_port,
+                "",
             ]
             for ip in [ipaddress.ip_address(ip) for ip in self.listen_addresses]
         ]
 
         manager = self.if_manager()
-        manager.SetLinkDomains(self.ifindex, domains)
-        manager.SetLinkDNS(self.ifindex, ips)
+        manager.SetLinkDNSEx(self.ifindex, ips)
         manager.SetLinkDNSSEC(self.ifindex, "no")
+        manager.SetLinkDomains(self.ifindex, domains)
 
     def unregister(self):
         manager = self.if_manager()
