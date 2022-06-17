@@ -1,6 +1,3 @@
-import copy
-
-from dnslib import RCODE
 from dnslib.server import BaseResolver
 
 
