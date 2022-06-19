@@ -2,9 +2,9 @@
 ## default: 127.0.0.53
 # DNS_SERVER=127.0.0.53
 
-## Docker interface name
-## default: first docker network's interface
-# DOCKER_INTERFACE=docker0
+## Dummy interface name which will be created to interface with systemd-resolved.
+## default: srd-dummy
+# SYSTEMD_RESOLVED_INTERFACE=srd-dummy
 
 ## IPs (+port) to listen on for queries from systemd-resolved.
 ## default: 127.0.0.153

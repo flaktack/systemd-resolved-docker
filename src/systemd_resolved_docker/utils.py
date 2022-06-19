@@ -1,5 +1,6 @@
 import ipaddress
 import urllib.parse
+from pyroute2 import NDB
 from typing import List
 
 
@@ -56,3 +57,20 @@ def find_default_docker_bridge_gateway(cli):
                 addresses.append({'gateway': gateway, 'interface': name})
 
     return addresses
+
+
+def create_dummy_interface(interface, ip_addresses):
+    with NDB(log='on') as ndb:
+        nbd_if = ndb.interfaces.create(ifname=interface, kind="dummy").set(state="up")
+        for ip_address in ip_addresses:
+            nbd_if = nbd_if.add_ip("%s/%s" % (
+                ip_address.ip.exploded, "32" if isinstance(ip_address.ip, ipaddress.IPv4Address) else "128"))
+
+        nbd_if.commit()
+
+
+def remove_dummy_interface(interface):
+    with NDB(log='on') as ndb:
+        ndbif = ndb.interfaces.get(interface)
+        if ndbif is not None:
+            ndbif.remove().commit()

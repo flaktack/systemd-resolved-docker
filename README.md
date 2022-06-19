@@ -2,11 +2,12 @@
 
 Provides systemd-resolved and docker DNS integration.
 
-A DNS server is configured to listen on each docker interface's IP address. This is used to:
-1. allows containers to be referenced by hostname by adding the created DNS servers to the docker interface using
-   the systemd-resolved D-Bus API.
-1. expose the systemd-resolved DNS service (`127.0.0.53`) to docker containers by proxying DNS requests, which doesn't
-   work by default due to the differing network namespaces.
+1. A DNS server is configured to listen on the docker interface's IP address. This is used to expose the systemd-resolved
+   DNS service (`127.0.0.53`) to docker containers by proxying DNS requests, which doesn't work by default due to the
+   differing network namespaces.
+
+2. Allows containers to be referenced by hostname by adding a DNS servers to a dummy interface using the systemd-resolved
+   D-Bus API.
 
 ## Features
 
@@ -70,7 +71,7 @@ an exact match is required. If a generated domain address doesn't match the list
 4. `<service>.<project>.<default_domain>`, `<service>.<project>`,
    `<container_number>.<service>.<project>.<default_domain>`, `<container_number>.<service>.<project>`
 
-   If `docker-compose` is then names will be generated based on the service and project's names. If a service has
+   If `docker-compose` is used then names will be generated based on the service and project names. If a service has
    multiple containers then the reply will contain all instances:
    ```sh
    host   webserver.someproject.docker                        #   webserver.someproject.docker has address 172.16.238.3
@@ -85,12 +86,16 @@ If configured correctly then `resolvectl status` should show the configured link
 
     $ resolvectl status
     ...
-    Link 7 (docker0)
+    Link 7 (srd-dummy)
     Current Scopes: DNS LLMNR/IPv4 LLMNR/IPv6
          Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
-       DNS Servers: 172.17.0.1
+       DNS Servers: 127.0.0.153
         DNS Domain: ~docker
-    ...
+    ... 
+
+A dummy interface (`srd-dummy` by default) is created to add the custom DNS server to systemd-resolved. This is required
+because the lifecycle of the `docker0` depends on there being running containers on the default network, even if there
+are running containers on other networks.
 
 ### 127.0.0.53 / systemd-resolved within containers
 
@@ -123,7 +128,7 @@ If there are link-local, VPN or other DNS servers configured then those will als
 | Name                              | Description                                                                                                             | Default Value                                            | Example                           |
 |-----------------------------------|-------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------|-----------------------------------|
 | DNS_SERVER                        | DNS server to use when resolving queries from docker containers.                                                        | `127.0.0.53` - systemd-resolved DNS server               | `127.0.0.53`                      |
-| DOCKER_INTERFACE                  | Docker interface name                                                                                                   | The first docker network's interface                     | `docker0`                         |
+| SYSTEMD_RESOLVED_INTERFACE        | Dummy interface name which will be created to interface with systemd-resolved                                           | `srd-dummy`                                              | `srd-dummy`                       |
 | SYSTEMD_RESOLVED_LISTEN_ADDRESS   | IPs (+port) to listen on for queries from systemd-resolved.                                                             | `127.0.0.153`                                            | `127.0.0.153:1053`                |
 | DOCKER_LISTEN_ADDRESS             | IPs (+port) to listen on for queries from docker containers in the default network.                                     | _ip of the default docker bridge_, often `172.17.0.1`    | `172.17.0.1` or `172.17.0.1:53`   |
 | ALLOWED_DOMAINS                   | Domain which will be handled by the DNS server. If a domain starts with `.` then all subdomains will also be allowed.   | `.docker`                                                | `.docker,.local`                  |
