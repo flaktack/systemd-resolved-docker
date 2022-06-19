@@ -49,13 +49,25 @@ class DockerWatcher(Thread):
             hostname = c.attrs['Config']['Hostname']
             domain = c.attrs['Config'].get('Domainname')
 
-            # if no explicit --hostname is provided, than it will be the first 12 characters of the container_id.
+            # if no explicit --hostname is provided, then it will be the first 12 characters of the container_id.
             # In that case, the hostname can be ignored
             if hostname != container_id[:12]:
                 if len(domain) > 0:
                     common_hostnames.append('%s.%s' % (hostname, domain))
                 else:
                     common_hostnames.append(hostname)
+
+            # for docker-compose services service.project (.docker) names are created
+            if c.attrs['Config'].get('Labels') and c.attrs['Config']['Labels'].get('com.docker.compose.service') and \
+                    c.attrs['Config']['Labels'].get('com.docker.compose.project'):
+                common_hostnames.append("%s.%s" % (c.attrs['Config']['Labels'].get('com.docker.compose.service'),
+                                                   c.attrs['Config']['Labels'].get('com.docker.compose.project')))
+
+                if c.attrs['Config']['Labels'].get('com.docker.compose.container-number'):
+                    common_hostnames.append("%s.%s.%s" % (c.attrs['Config']['Labels'].get('com.docker.compose.container-number'),
+                                                          c.attrs['Config']['Labels'].get('com.docker.compose.service'),
+                                                          c.attrs['Config']['Labels'].get(
+                                                              'com.docker.compose.project')))
 
             name = c.attrs['Name'][1:]
             settings = c.attrs['NetworkSettings']

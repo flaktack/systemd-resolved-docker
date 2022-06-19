@@ -28,7 +28,7 @@ an exact match is required. If a generated domain address doesn't match the list
    d6d51528ac46        alpine                    "/bin/sh"                8 seconds ago       Up 6 seconds                                 relaxed_cartwright
    ```
 
-1. `<container_hostname>.<default_domain>`, `<container_hostname>.<container_domain>.<default_domain>`, `<container_hostname>.<container_domain>`
+2. `<container_hostname>.<default_domain>`, `<container_hostname>.<container_domain>.<default_domain>`, `<container_hostname>.<container_domain>`
 
    If an explicit `--hostname` is provided then that may also be used:
    ```sh
@@ -49,7 +49,7 @@ an exact match is required. If a generated domain address doesn't match the list
    docker run --rm -it --hostname test --domainname local    alpine  # test.local
    ```
 
-1. `<container_name>.<container_network>.<default_domain>`, `<container_name>.<container_network>`
+3. `<container_name>.<container_network>.<default_domain>`, `<container_name>.<container_network>`
 
    If a non-default network is used (not `bridge` or `host`) then a name will be generated based on the network's name:
    ```sh
@@ -62,6 +62,20 @@ an exact match is required. If a generated domain address doesn't match the list
    docker run --rm -it           --network somenet alpine            # zealous_jones.somenet
    docker run --rm -it --name db --network somenet alpine            # db.somenet.docker
    ```
+
+4. `<service>.<project>.<default_domain>`, `<service>.<project>`,
+   `<container_number>.<service>.<project>.<default_domain>`, `<container_number>.<service>.<project>`
+
+   If `docker-compose` is then names will be generated based on the service and project's names. If a service has
+   multiple containers then the reply will contain all instances:
+   ```sh
+   host   webserver.someproject.docker                        #   webserver.someproject.docker has address 172.16.238.3
+                                                              #   webserver.someproject.docker has address 172.16.238.4
+   host 1.webserver.someproject.docker                        # 1.webserver.someproject.docker has address 172.16.238.3
+   ```
+
+   When the project's name is in the list of _allowed domains_ (`ALLOWED_DOMAINS=.docker,.someproject`), then the
+   `default_domain` will not be appended:
 
 If configured correctly then `resolvectl status` should show the configured link-specific DNS server:
 
