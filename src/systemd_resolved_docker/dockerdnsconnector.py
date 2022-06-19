@@ -23,7 +23,7 @@ class DockerDNSConnector:
 
         self.dns_domains_globs = ['*%s' % domain if domain.startswith('.') else domain for domain in dns_domains]
 
-        self.resolver = ZoneResolver([])
+        self.resolver = ZoneResolver([], glob=True)
         self.servers = []
 
         resolver = InterceptResolver(self.dns_domains_globs, self.resolver,
