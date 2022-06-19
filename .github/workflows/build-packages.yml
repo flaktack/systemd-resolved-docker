@@ -1,0 +1,45 @@
+name: Build Packages
+on: [push]
+jobs:
+  Debian:
+    runs-on: ubuntu-latest
+    container:
+      image: debian:latest
+    steps:
+      - name: Install fpm
+        run: |
+          apt-get update
+          apt-get install -y ruby ruby-dev rubygems build-essential python3-simplejson python3-pkg-resources python3-setuptools
+          gem install fpm
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Build package
+        run: fpm -s python -t deb --python-bin=python3 --deb-systemd systemd-resolved-docker.service setup.py
+      - name: Save artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Debian package
+          path: |
+            *.deb
+
+  Fedora:
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+    steps:
+      - name: Install tito
+        run: dnf install -y tito python3-devel
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: List contents
+        run:  git config --global --add safe.directory $(pwd)
+      - name: Build package
+        run:  tito build --rpm --offline --test
+      - name: Save artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: RPM package
+          path: |
+            /tmp/tito/noarch/*.rpm
