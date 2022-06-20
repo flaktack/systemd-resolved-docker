@@ -133,6 +133,7 @@ If there are link-local, VPN or other DNS servers configured then those will als
 | DOCKER_LISTEN_ADDRESS             | IPs (+port) to listen on for queries from docker containers in the default network.                                     | _ip of the default docker bridge_, often `172.17.0.1`    | `172.17.0.1` or `172.17.0.1:53`   |
 | ALLOWED_DOMAINS                   | Domain which will be handled by the DNS server. If a domain starts with `.` then all subdomains will also be allowed.   | `.docker`                                                | `.docker,.local`                  |
 | DEFAULT_DOMAIN                    | Domain to append to hostnames which are not allowed by `ALLOWED_DOMAINS`.                                               | `docker`                                                 | `docker`                          |
+| DEFAULT_HOST_IP                   | IP address to use for containers on the host network if the container doesn't contain one.                              | `127.0.0.1`                                              | `127.0.0.1`                       |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------- |
 
 ## Install

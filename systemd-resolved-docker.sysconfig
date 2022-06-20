@@ -24,3 +24,7 @@
 ## will be forwarded to the configured DNS server.
 ## default: .docker
 # ALLOWED_DOMAINS=.docker
+
+## IP address to use with host networks when an IP is not specified
+## default: 127.0.0.1
+# DEFAULT_HOST_ip=127.0.0.1

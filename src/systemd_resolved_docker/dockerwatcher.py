@@ -18,7 +18,7 @@ class DockerWatcher(Thread):
         Thread based module for watching for docker container changes.
     """
 
-    def __init__(self, handler, cli=None):
+    def __init__(self, handler, default_host_ip='127.0.0.1', cli=None):
         super().__init__()
 
         if cli is None:
@@ -26,6 +26,7 @@ class DockerWatcher(Thread):
 
         self.daemon = True
         self.handler = handler
+        self.default_host_ip = default_host_ip
         self.cli = cli
 
     def run(self) -> None:
@@ -77,7 +78,10 @@ class DockerWatcher(Thread):
             for netname, network in settings.get('Networks', {}).items():
                 ip = network.get('IPAddress', False)
                 if not ip or ip == "":
-                    continue
+                    if netname == 'host':
+                        ip = self.default_host_ip
+                    else:
+                        continue
 
                 # record the container name DOT network
                 # eg. container is named "foo", and network is "demo",

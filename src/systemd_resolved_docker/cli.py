@@ -38,6 +38,7 @@ def main():
     docker_listen_address = os.environ.get("DOCKER_LISTEN_ADDRESS", None)
     dns_server = parse_ip_port(os.environ.get("UPSTREAM_DNS_SERVER", "127.0.0.53"))
     default_domain = os.environ.get("DEFAULT_DOMAIN", "docker")
+    default_host_ip = os.environ.get("DEFAULT_HOST_IP", "127.0.0.1")
 
     tld = os.environ.get('ALLOWED_DOMAINS', None)
     if tld is None or len(tld.strip()) == 0:
@@ -64,7 +65,7 @@ def main():
     resolved = SystemdResolvedConnector(systemd_resolved_interface, systemd_resolved_listen_addresses, domains, handler)
 
     dns_connector = DockerDNSConnector(systemd_resolved_listen_addresses + docker_listen_addresses, dns_server, domains,
-                                       default_domain, handler, cli)
+                                       default_domain, default_host_ip, handler, cli)
     dns_connector.start()
 
     resolved.register()

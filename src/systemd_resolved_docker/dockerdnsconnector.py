@@ -13,7 +13,7 @@ from .zoneresolver import ZoneResolver
 
 class DockerDNSConnector:
     def __init__(self, listen_addresses: List[IpAndPort], upstream_dns_server: IpAndPort, dns_domains, default_domain,
-                 handler, cli):
+                 default_host_ip, handler, cli):
         super().__init__()
 
         self.default_domain = default_domain
@@ -35,7 +35,7 @@ class DockerDNSConnector:
             server.thread_name = "%s:%s" % (ip_and_port.ip, ip_and_port.port)
             self.servers.append(server)
 
-        self.watcher = DockerWatcher(self, cli)
+        self.watcher = DockerWatcher(self, default_host_ip, cli)
 
     def start(self):
         self.watcher.start()
