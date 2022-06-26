@@ -1,8 +1,42 @@
 name: Build Packages
 on: [ push ]
 jobs:
-  build-deb:
-    name: Build DEB package
+  build-deb-20-04:
+    name: Build DEB package (Ubuntu 20.04)
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Install fpm
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby ruby-dev rubygems build-essential python3-simplejson python3-pkg-resources python3-setuptools
+          sudo gem install fpm
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Build package
+        run: >
+          fpm --input-type  python                                 \
+              --output-type deb                                    \
+              --python-bin=python3                                 \
+              --python-install-bin /usr/bin                        \
+              --python-install-lib $(python3 -c 'from distutils.sysconfig import get_python_lib; print(get_python_lib())') \
+              --deb-systemd debian/systemd-resolved-docker.service \
+              --no-auto-depends                                    \
+              --depends python3-docker                             \
+              --depends python3-dnslib                             \
+              --depends python3-dbus                               \
+              --depends python3-pyroute2                           \
+              --depends python3-systemd                            \
+              --depends systemd                                    \
+              setup.py
+      - name: Save artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: DEB package (Ubuntu 20.04)
+          path: |
+            *.deb
+
+  build-deb-22-04:
+    name: Build DEB package (Ubuntu 22.04)
     runs-on: ubuntu-22.04
     steps:
       - name: Install fpm
@@ -17,6 +51,7 @@ jobs:
           fpm --input-type  python                                 \
               --output-type deb                                    \
               --python-bin=python3                                 \
+              --python-install-bin /usr/bin                        \
               --deb-systemd debian/systemd-resolved-docker.service \
               --no-auto-depends                                    \
               --depends python3-docker                             \
@@ -29,7 +64,7 @@ jobs:
       - name: Save artifact
         uses: actions/upload-artifact@v3
         with:
-          name: DEB package
+          name: DEB package (Ubuntu 22.04)
           path: |
             *.deb
 
@@ -69,18 +104,39 @@ jobs:
       - name: Run tests
         run: sudo python3 -m unittest
 
-  test-deb:
-    name: Test DEB package
-    runs-on: ubuntu-22.04
+  test-deb-20-04:
+    name: Test DEB package (Ubuntu 20.04)
+    runs-on: ubuntu-20.04
     needs:
-      - build-deb
+      - build-deb-20-04
     steps:
       - name: Download DEB package
         uses: actions/download-artifact@master
         with:
-          name: DEB package
+          name: DEB package (Ubuntu 20.04)
           path: /tmp
-      - run: ls -lash /tmp
+      - name: Install package
+        run: sudo apt install /tmp/python-systemd-resolved-docker_*.deb
+      - name: Start service
+        run: sudo systemctl start systemd-resolved-docker || (journalctl -xe && false)
+      - name: Start continaer
+        run: docker run --detach --interactive --hostname test-container alpine
+      - name: resolvectl status
+        run: resolvectl status
+      - name: Test Query
+        run: resolvectl query test-container.docker
+
+  test-deb-22-04:
+    name: Test DEB package (Ubuntu 22.04)
+    runs-on: ubuntu-22.04
+    needs:
+      - build-deb-22-04
+    steps:
+      - name: Download DEB package
+        uses: actions/download-artifact@master
+        with:
+          name: DEB package (Ubuntu 22.04)
+          path: /tmp
       - name: Install package
         run: sudo apt install /tmp/python-systemd-resolved-docker_*.deb
       - name: Start service

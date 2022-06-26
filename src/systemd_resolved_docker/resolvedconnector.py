@@ -40,20 +40,35 @@ class SystemdResolvedConnector:
             self.interface, self.dns_domains, ", ".join(map(lambda x: str(x), self.listen_addresses))))
 
         domains = [[domain.strip("."), True] for domain in self.dns_domains]
-        ips = [
-            [
-                AF_INET if isinstance(ip_port.ip, ipaddress.IPv4Address) else AF_INET6,
-                ip_port.ip.packed,
-                ip_port.port,
-                "",
-            ]
-            for ip_port in self.listen_addresses
-        ]
 
-        manager = self.if_manager()
-        manager.SetLinkDNSEx(self.ifindex, ips)
-        manager.SetLinkDNSSEC(self.ifindex, "no")
-        manager.SetLinkDomains(self.ifindex, domains)
+        try:
+            ips = [
+                [
+                    AF_INET if isinstance(ip_port.ip, ipaddress.IPv4Address) else AF_INET6,
+                    ip_port.ip.packed,
+                    ip_port.port,
+                    "",
+                ]
+                for ip_port in self.listen_addresses
+            ]
+
+            manager = self.if_manager()
+            manager.SetLinkDNSEx(self.ifindex, ips)
+            manager.SetLinkDNSSEC(self.ifindex, "no")
+            manager.SetLinkDomains(self.ifindex, domains)
+        except Exception as ex:
+            ips = [
+                [
+                    AF_INET if isinstance(ip_port.ip, ipaddress.IPv4Address) else AF_INET6,
+                    ip_port.ip.packed
+                ]
+                for ip_port in self.listen_addresses
+            ]
+
+            manager = self.if_manager()
+            manager.SetLinkDNS(self.ifindex, ips)
+            manager.SetLinkDNSSEC(self.ifindex, "no")
+            manager.SetLinkDomains(self.ifindex, domains)
 
     def unregister(self):
         self.handler.log("Unregistering with systemd-resolved: %s" % self.interface)

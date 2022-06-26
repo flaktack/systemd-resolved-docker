@@ -7,7 +7,7 @@ BindsTo=docker.service systemd-resolved.service
 [Service]
 Type=notify
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/usr/local/bin/systemd-resolved-docker
+ExecStart=/usr/bin/systemd-resolved-docker
 Restart=on-failure
 
 [Install]
