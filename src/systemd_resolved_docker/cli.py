@@ -9,7 +9,7 @@ from systemd import daemon
 from .dockerdnsconnector import DockerDNSConnector
 from .resolvedconnector import SystemdResolvedConnector
 from .utils import find_default_docker_bridge_gateway, parse_ip_port, parse_listen_address, remove_dummy_interface, \
-    create_dummy_interface
+    create_dummy_interface, sanify_domain
 
 
 class Handler:
@@ -44,7 +44,7 @@ def main():
     if tld is None or len(tld.strip()) == 0:
         domains = [".docker"]
     else:
-        domains = [item.strip() for item in tld.split(',')]
+        domains = [sanify_domain(item) for item in tld.split(',')]
 
     cli = docker.from_env()
     docker_gateway = find_default_docker_bridge_gateway(cli)

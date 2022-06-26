@@ -74,3 +74,11 @@ def remove_dummy_interface(interface):
         ndbif = ndb.interfaces.get(interface)
         if ndbif is not None:
             ndbif.remove().commit()
+
+
+def sanify_domain(domain: str):
+    domain = domain.strip()
+    if domain[0] == '.':
+        return domain
+    else:
+        return '.' + domain

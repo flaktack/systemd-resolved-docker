@@ -35,11 +35,6 @@ an exact match is required. If a generated domain address doesn't match the list
    ```sh
    docker run --rm -it --hostname test      alpine                   # test.docker
    ```
-   When the hostname is in the list of _allowed domains_ (`ALLOWED_DOMAINS=.docker,some-host`), then the `default_domain`
-   will not be appended:
-   ```sh
-   docker run --rm -it --hostname some-host alpine                   # some-host
-   ```
    Glob matching is supported in the `--hostname`, with which wildcard domains are supported:
    ```sh
    docker run --hostname '*.test' --rm -it alpine                    # anything.test
