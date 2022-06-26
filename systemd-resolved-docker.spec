@@ -2,7 +2,7 @@
 %global eggname systemd_resolved_docker
 
 Name:           %{srcname}
-Version:        0.4.0
+Version:        0.5.0
 Release:        1%{?dist}
 Summary:        systemd-resolved and docker DNS integration
 
@@ -79,6 +79,16 @@ install -p -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sysconfig/%{srcname}
 #-- CHANGELOG -----------------------------------------------------------------#
 	
 %changelog
+* Sun Jun 26 2022 Zsombor Welker <fedora@zdeqb.com> 0.5.0-1
+- Generate names for docker-compose projects
+- Don't allow top-level only domains in ALLOWED_DOMAINS
+- Add the DEFAULT_DOMAIN to ALLOWED_DOMAINS if it is not contained
+- Add explicit handling for the host network using DEFAULT_HOST_IP
+- Create a dummy interface to intergate with systemd-resolved
+- Allow specifying both the listen IPs and ports
+- Use SetLinkDNSEx so that the ip:port may be specified
+- Add support for wildcard domains
+- Add integration tests and Github Actions
 * Sun Apr 25 2021 Zsombor Welker <fedora@zdeqb.com> 0.4.0-1
 - Document unmanaging the docker0 interface
 - Explicitly disable DNSSEC in systemd-resolved
