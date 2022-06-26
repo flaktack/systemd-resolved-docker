@@ -46,6 +46,9 @@ def main():
     else:
         domains = [sanify_domain(item) for item in tld.split(',')]
 
+    if '.' + default_domain not in domains:
+        domains.append('.' + default_domain)
+
     cli = docker.from_env()
     docker_gateway = find_default_docker_bridge_gateway(cli)
 
