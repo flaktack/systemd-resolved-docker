@@ -1,0 +1,93 @@
+name: Build Packages
+on: [ push ]
+jobs:
+  build-deb:
+    name: Build DEB package
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install fpm
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby ruby-dev rubygems build-essential python3-simplejson python3-pkg-resources python3-setuptools
+          sudo gem install fpm
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Build package
+        run: >
+          fpm --input-type  python                                 \
+              --output-type deb                                    \
+              --python-bin=python3                                 \
+              --deb-systemd debian/systemd-resolved-docker.service \
+              --no-auto-depends                                    \
+              --depends python3-docker                             \
+              --depends python3-dnslib                             \
+              --depends python3-dbus                               \
+              --depends python3-pyroute2                           \
+              --depends python3-systemd                            \
+              --depends systemd                                    \
+              setup.py
+      - name: Save artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: DEB package
+          path: |
+            *.deb
+
+  build-rpm:
+    name: Build RPM package
+    runs-on: ubuntu-22.04
+    container:
+      image: fedora:latest
+    steps:
+      - name: Install tito
+        run: dnf install -y tito python3-devel
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: List contents
+        run: git config --global --add safe.directory $(pwd)
+      - name: Build package
+        run: tito build --rpm --offline --test
+      - name: Save artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: RPM package
+          path: |
+            /tmp/tito/noarch/*.rpm
+
+  tests:
+    name: Run tests
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-docker python3-dnslib python3-dbus python3-pyroute2 python3-systemd
+      - name: Run tests
+        run: sudo python3 -m unittest
+
+  test-deb:
+    name: Test DEB package
+    runs-on: ubuntu-22.04
+    needs:
+      - build-deb
+    steps:
+      - name: Download DEB package
+        uses: actions/download-artifact@master
+        with:
+          name: DEB package
+          path: /tmp
+      - run: ls -lash /tmp
+      - name: Install package
+        run: sudo apt install /tmp/python-systemd-resolved-docker_*.deb
+      - name: Start service
+        run: sudo systemctl start systemd-resolved-docker
+      - name: Start continaer
+        run: docker run --detach --interactive --hostname test-container alpine
+      - name: resolvectl status
+        run: resolvectl status
+      - name: Test Query
+        run: resolvectl query test-container.docker

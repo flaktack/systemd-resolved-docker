@@ -61,11 +61,12 @@ def find_default_docker_bridge_gateway(cli):
 
 def create_dummy_interface(interface, ip_addresses):
     with NDB(log='on') as ndb:
-        nbd_if = ndb.interfaces.create(ifname=interface, kind="dummy").set(state="up")
+        nbd_if = ndb.interfaces.create(ifname=interface, kind="dummy")
         for ip_address in ip_addresses:
             nbd_if = nbd_if.add_ip("%s/%s" % (
                 ip_address.ip.exploded, "32" if isinstance(ip_address.ip, ipaddress.IPv4Address) else "128"))
 
+        nbd_if.set('state', 'up')
         nbd_if.commit()
 
 
