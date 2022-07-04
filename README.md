@@ -75,7 +75,12 @@ an exact match is required. If a generated domain address doesn't match the list
    ```
 
    When the project's name is in the list of _allowed domains_ (`ALLOWED_DOMAINS=.docker,.someproject`), then the
-   `default_domain` will not be appended:
+   `default_domain` will not be appended.
+
+   If a `<service>` name is unique, then it is available also as `<service>.<default_domain>`.
+   ```
+   host   webserver.docker                                    #   webserver.docker has address 172.16.238.3
+   ```
 
 If configured correctly then `resolvectl status` should show the configured link-specific DNS server:
 

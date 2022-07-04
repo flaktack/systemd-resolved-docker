@@ -42,6 +42,9 @@ class DockerWatcher(Thread):
     def collect_from_containers(self):
         domain_records = {}
 
+        non_unique_hostnames = set()
+        duplicate_hostnames = set()
+
         for c in self.cli.containers.list():
             common_hostnames = []
 
@@ -64,14 +67,20 @@ class DockerWatcher(Thread):
             # for docker-compose services service.project (.docker) names are created
             if c.attrs['Config'].get('Labels') and c.attrs['Config']['Labels'].get('com.docker.compose.service') and \
                     c.attrs['Config']['Labels'].get('com.docker.compose.project'):
-                common_hostnames.append("%s.%s" % (c.attrs['Config']['Labels'].get('com.docker.compose.service'),
-                                                   c.attrs['Config']['Labels'].get('com.docker.compose.project')))
+                compose_service = c.attrs['Config']['Labels'].get('com.docker.compose.service')
+                compose_project = c.attrs['Config']['Labels'].get('com.docker.compose.project')
 
-                if c.attrs['Config']['Labels'].get('com.docker.compose.container-number'):
-                    common_hostnames.append("%s.%s.%s" % (c.attrs['Config']['Labels'].get('com.docker.compose.container-number'),
-                                                          c.attrs['Config']['Labels'].get('com.docker.compose.service'),
-                                                          c.attrs['Config']['Labels'].get(
-                                                              'com.docker.compose.project')))
+                common_hostnames.append(compose_service)
+                common_hostnames.append("%s.%s" % (compose_service, compose_project))
+
+                if compose_service in non_unique_hostnames:
+                    duplicate_hostnames.add(compose_service)
+                else:
+                    non_unique_hostnames.add(compose_service)
+
+                compose_container_number = c.attrs['Config']['Labels'].get('com.docker.compose.container-number')
+                if compose_container_number:
+                    common_hostnames.append("%s.%s.%s" % (compose_container_number, compose_service, compose_project))
 
             name = c.attrs['Name'][1:]
             settings = c.attrs['NetworkSettings']
@@ -92,6 +101,9 @@ class DockerWatcher(Thread):
                     record.append('%s.%s' % (name, netname))
 
                 domain_records[ip] = record
+
+        for ip, hosts in domain_records.items():
+            domain_records[ip] = list(filter(lambda h: h not in duplicate_hostnames, hosts))
 
         hostnames = [DockerHost(hosts, ip) for ip, hosts in domain_records.items()]
 

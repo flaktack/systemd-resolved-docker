@@ -26,9 +26,26 @@ networks:
      - $TEST_LABEL
     ipam:
       driver: default
-      config:
-        - subnet: 172.16.238.0/24
-          gateway: 172.16.238.1
+EOF
+
+exec 20<<EOF
+version: "2.1"
+services:
+  broker:
+    image: redis
+    labels:
+     - $TEST_LABEL
+    networks:
+      - network
+
+networks:
+  network:
+    driver: bridge
+    enable_ipv6: false
+    labels:
+     - $TEST_LABEL
+    ipam:
+      driver: default
 EOF
 
 ALLOWED_DOMAINS=.docker,.$TEST_PREFIX start_systemd_resolved_docker
@@ -46,3 +63,8 @@ query_ok     webserver.$TEST_PREFIX $webserver1_ip
 query_ok     webserver.$TEST_PREFIX $webserver2_ip
 query_ok   1.webserver.$TEST_PREFIX $webserver1_ip
 query_ok   2.webserver.$TEST_PREFIX $webserver2_ip
+
+query_ok     broker.docker $broker1_ip
+
+docker-compose --file /dev/fd/20 --project-name ${TEST_PREFIX}_2 up --detach
+query_fail   broker.docker
