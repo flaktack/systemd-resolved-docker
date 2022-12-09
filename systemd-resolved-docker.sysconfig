@@ -1,6 +1,25 @@
+## Domain globs of domains which will be handled by the DNS server.
+## A container must be within one of these domains, while all non-matching requests
+## will be forwarded to the configured DNS server.
+## default: .docker
+# ALLOWED_DOMAINS=.docker
+
+## Domain to append to containers which don't have one set using `--domainname`
+## or are not part of a network
+## default: .docker
+# DEFAULT_DOMAIN=docker
+
+## IPs (+port) to listen on for queries from docker containers in the default network.
+## default: ip of the default docker bridge
+# DOCKER_LISTEN_ADDRESS=172.17.0.1:53
+
+## IP address to use with host networks when an IP is not specified
+## default: 127.0.0.1
+# DEFAULT_HOST_ip=127.0.0.1
+
 ## DNS server to use when resolving queries from docker containers.
 ## default: 127.0.0.53
-# DNS_SERVER=127.0.0.53
+# UPSTREAM_DNS_SERVER=127.0.0.53
 
 ## Dummy interface name which will be created to interface with systemd-resolved.
 ## default: srd-dummy
@@ -9,22 +28,3 @@
 ## IPs (+port) to listen on for queries from systemd-resolved.
 ## default: 127.0.0.153
 # SYSTEMD_RESOLVED_LISTEN_ADDRESS=127.0.0.153:53
-
-## IPs (+port) to listen on for queries from docker containers in the default network.
-## default: ip of the default docker bridge
-# DOCKER_LISTEN_ADDRESS=172.17.0.1:53
-
-## Domain to append to containers which don't have one set using `--domainname`
-## or are not part of a network
-## default: .docker
-# DEFAULT_DOMAIN=docker
-
-## Domain globs of domains which will be handled by the DNS server.
-## A container must be within one of these domains, while all non-matching requests
-## will be forwarded to the configured DNS server.
-## default: .docker
-# ALLOWED_DOMAINS=.docker
-
-## IP address to use with host networks when an IP is not specified
-## default: 127.0.0.1
-# DEFAULT_HOST_ip=127.0.0.1
