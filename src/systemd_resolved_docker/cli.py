@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import os
 import signal
 
@@ -9,7 +8,7 @@ from systemd import daemon
 from .dockerdnsconnector import DockerDNSConnector
 from .resolvedconnector import SystemdResolvedConnector
 from .utils import find_default_docker_bridge_gateway, parse_ip_port, parse_listen_address, remove_dummy_interface, \
-    create_dummy_interface, sanify_domain
+    create_dummy_interface, sanify_domain, parse_ip
 
 
 class Handler:
@@ -58,7 +57,7 @@ def main():
     systemd_resolved_listen_addresses = parse_listen_address(systemd_resolved_listen_address,
                                                              lambda: [parse_ip_port("127.0.0.153:53")])
     docker_listen_addresses = parse_listen_address(docker_listen_address,
-                                                   lambda: [parse_ip_port(entry['gateway']) for entry in
+                                                   lambda: [parse_ip(entry['gateway']) for entry in
                                                             docker_gateway])
 
     handler.log("Creating interface %s" % systemd_resolved_interface)

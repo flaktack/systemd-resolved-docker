@@ -1,19 +1,23 @@
 import ipaddress
 import urllib.parse
 from pyroute2 import NDB
-from typing import List
+from typing import List, Union
 
 
 class IpAndPort:
-    ip: ipaddress.ip_address
-    port: int
-
-    def __init__(self, ip: ipaddress.ip_address, port: int):
+    def __init__(self, ip: Union[ipaddress.IPv4Address, ipaddress.IPv6Address], port: int):
         self.ip = ip
         self.port = port
 
     def __str__(self):
-        return "%s:%s" % (self.ip.compressed, self.port)
+        if isinstance(self.ip, ipaddress.IPv4Address):
+            return "%s:%s" % (self.ip.compressed, self.port)
+        else:
+            return "[%s]:%s" % (self.ip.compressed, self.port)
+
+
+def parse_ip(entry, default_port=53) -> IpAndPort:
+    return IpAndPort(ip=ipaddress.ip_address(entry), port=default_port)
 
 
 def parse_ip_port(entry, default_port=53) -> IpAndPort:

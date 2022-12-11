@@ -21,7 +21,7 @@ an exact match is required. If a generated domain address doesn't match the list
 
 1. `<container_id>.<default_domain>`
 
-   All containers will be reachable by their `container_id`:
+   All containers may be reachable by their `container_id`:
    ```sh
    docker run --rm -it alpine                                        #  d6d51528ac46.docker
    docker ps
@@ -125,15 +125,17 @@ If there are link-local, VPN or other DNS servers configured then those will als
 `systemd-resolved-docker` may be configured using environment variables. When installed using the RPM
 `/etc/sysconfig/systemd-resolved-docker` may also be modified to update the environment variables.
 
+*Note*: IPv6 addresses should be provided in square brackets (`[2001:db8:1::1]` or `[2001:db8:1::1]:1053`).
+
 | Name                              | Description                                                                                                             | Default Value                                            | Example                           |
 |-----------------------------------|-------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------|-----------------------------------|
-| DNS_SERVER                        | DNS server to use when resolving queries from docker containers.                                                        | `127.0.0.53` - systemd-resolved DNS server               | `127.0.0.53`                      |
-| SYSTEMD_RESOLVED_INTERFACE        | Dummy interface name which will be created to interface with systemd-resolved                                           | `srd-dummy`                                              | `srd-dummy`                       |
-| SYSTEMD_RESOLVED_LISTEN_ADDRESS   | IPs (+port) to listen on for queries from systemd-resolved.                                                             | `127.0.0.153`                                            | `127.0.0.153:1053`                |
-| DOCKER_LISTEN_ADDRESS             | IPs (+port) to listen on for queries from docker containers in the default network.                                     | _ip of the default docker bridge_, often `172.17.0.1`    | `172.17.0.1` or `172.17.0.1:53`   |
 | ALLOWED_DOMAINS                   | Domain which will be handled by the DNS server. If a domain starts with `.` then all subdomains will also be allowed.   | `.docker`                                                | `.docker,.local`                  |
 | DEFAULT_DOMAIN                    | Domain to append to hostnames which are not allowed by `ALLOWED_DOMAINS`.                                               | `docker`                                                 | `docker`                          |
 | DEFAULT_HOST_IP                   | IP address to use for containers on the host network if the container doesn't contain one.                              | `127.0.0.1`                                              | `127.0.0.1`                       |
+| DOCKER_LISTEN_ADDRESS             | IPs (+port) to listen on for queries from docker containers in the default network.                                     | _ip of the default docker bridge_, often `172.17.0.1`    | `172.17.0.1` or `172.17.0.1:53`   |
+| UPSTREAM_DNS_SERVER               | DNS server to use when resolving queries from docker containers.                                                        | `127.0.0.53` - systemd-resolved DNS server               | `127.0.0.53`                      |
+| SYSTEMD_RESOLVED_INTERFACE        | Dummy interface name which will be created to interface with systemd-resolved                                           | `srd-dummy`                                              | `srd-dummy`                       |
+| SYSTEMD_RESOLVED_LISTEN_ADDRESS   | IPs (+port) to listen on for queries from systemd-resolved.                                                             | `127.0.0.153`                                            | `127.0.0.153:1053`                |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------- |
 
 ## Install

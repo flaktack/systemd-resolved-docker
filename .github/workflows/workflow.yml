@@ -82,9 +82,17 @@ jobs:
           fetch-depth: 0
       - name: List contents
         run: git config --global --add safe.directory $(pwd)
-      - name: Build package
+      - name: Build SRPM
+        run: tito build --srpm --offline --test
+      - name: Save SRPM
+        uses: actions/upload-artifact@v3
+        with:
+          name: SRPM package
+          path: |
+            /tmp/tito/*.src.rpm
+      - name: Build RPM
         run: tito build --rpm --offline --test
-      - name: Save artifacts
+      - name: Save RPM
         uses: actions/upload-artifact@v3
         with:
           name: RPM package
