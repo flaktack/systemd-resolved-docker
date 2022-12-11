@@ -1,10 +1,13 @@
+import ipaddress
+from typing import List, Union
+
 import docker
 
 from threading import Thread
 
 
 class DockerHost:
-    def __init__(self, host_names, ip, interface=None):
+    def __init__(self, host_names: List[str], ip: Union[ipaddress.IPv4Address, ipaddress.IPv6Address], interface=None):
         self.host_names = host_names
         self.ip = ip
         self.interface = interface
@@ -85,10 +88,11 @@ class DockerWatcher(Thread):
             name = c.attrs['Name'][1:]
             settings = c.attrs['NetworkSettings']
             for netname, network in settings.get('Networks', {}).items():
-                ip = network.get('IPAddress', False)
-                if not ip or ip == "":
+                ips = [network[field] for field in ['IPAddress', 'GlobalIPv6Address'] if
+                       field in network and network[field] != ""]
+                if not ips:
                     if netname == 'host':
-                        ip = self.default_host_ip
+                        ips = [self.default_host_ip]
                     else:
                         continue
 
@@ -96,11 +100,13 @@ class DockerWatcher(Thread):
                 # eg. container is named "foo", and network is "demo",
                 #     so create "foo.demo" domain name
                 # (avoiding default network named "bridge")
-                record = domain_records.get(ip, [*common_hostnames])
-                if netname != "bridge":
-                    record.append('%s.%s' % (name, netname))
+                for ip in ips:
+                    ipr = ipaddress.ip_address(ip)
+                    record = domain_records.get(ipr, [*common_hostnames])
+                    if netname != "bridge":
+                        record.append('%s.%s' % (name, netname))
 
-                domain_records[ip] = record
+                    domain_records[ipr] = record
 
         for ip, hosts in domain_records.items():
             domain_records[ip] = list(filter(lambda h: h not in duplicate_hostnames, hosts))

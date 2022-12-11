@@ -2,7 +2,7 @@ import ipaddress
 import threading
 from typing import List
 
-from dnslib import A, CLASS, DNSLabel, QTYPE, RR
+from dnslib import A, AAAA, CLASS, DNSLabel, QTYPE, RR
 from dnslib.proxy import ProxyResolver
 from dnslib.server import DNSServer
 
@@ -72,7 +72,10 @@ class DockerDNSConnector:
                 hn = self.as_allowed_hostname(host_name)
                 mh.host_names.append(hn)
 
-                rr = RR(hn, QTYPE.A, CLASS.IN, 1, A(host.ip))
+                if isinstance(host.ip, ipaddress.IPv4Address):
+                    rr = RR(hn, QTYPE.A, CLASS.IN, 1, A(host.ip.exploded))
+                else:
+                    rr = RR(hn, QTYPE.AAAA, CLASS.IN, 1, AAAA(host.ip.exploded))
                 zone.append(rr)
                 host_names.append(hn)
 

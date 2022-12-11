@@ -44,6 +44,13 @@ docker_ip() {
   docker inspect --format '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $container_id
 }
 
+docker_ipv6() {
+  local container_id=$1
+  shift;
+
+  docker inspect --format '{{range.NetworkSettings.Networks}}{{.GlobalIPv6Address}}{{end}}' $container_id
+}
+
 docker_name() {
   local container_id=$1
   shift;

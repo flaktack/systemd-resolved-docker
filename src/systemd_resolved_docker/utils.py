@@ -1,14 +1,11 @@
 import ipaddress
 import urllib.parse
 from pyroute2 import NDB
-from typing import List
+from typing import List, Union
 
 
 class IpAndPort:
-    ip: ipaddress.ip_address
-    port: int
-
-    def __init__(self, ip: ipaddress.ip_address, port: int):
+    def __init__(self, ip: Union[ipaddress.IPv4Address, ipaddress.IPv6Address], port: int):
         self.ip = ip
         self.port = port
 
