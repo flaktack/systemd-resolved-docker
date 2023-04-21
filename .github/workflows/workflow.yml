@@ -1,5 +1,7 @@
 name: Build Packages
 on: [ push ]
+permissions:
+  contents: write
 jobs:
   build-deb-20-04:
     name: Build DEB package (Ubuntu 20.04)
@@ -147,3 +149,35 @@ jobs:
         run: resolvectl status
       - name: Test Query
         run: resolvectl query test-container.docker
+
+  upload-artifacts-to-release:
+    name: Upload artifacts to release
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    needs:
+      - build-rpm
+      - tests
+      - test-deb-20-04
+      - test-deb-22-04
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: all-artifacts
+      - name: Rename Ubuntu deb packages
+        shell: bash
+        run: |
+          cd "all-artifacts/DEB package (Ubuntu 22.04)" || exit 1
+          FILENAME_22_04="$(ls python-systemd-resolved-docker_*_all.deb)"
+          mv "${FILENAME_22_04}" "${FILENAME_22_04/_all/_22.04_all}"
+          cd - || exit 1
+          cd "all-artifacts/DEB package (Ubuntu 20.04)" || exit 1
+          FILENAME_20_04="$(ls python-systemd-resolved-docker_*_all.deb)"
+          mv "${FILENAME_20_04}" "${FILENAME_20_04/_all/_20.04_all}"
+          cd - || exit 1
+      - name: Upload artifacts
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            all-artifacts/*/*.deb
+            all-artifacts/*/*.rpm
